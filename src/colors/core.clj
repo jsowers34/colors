@@ -2,6 +2,7 @@
     (:gen-class))
 
 (require 'clojure.walk)
+(import 'com.rff.utilities.Xcolortable)
 
 (def test-color-map
   "A color map used to test new code.  The actual map is much to large to be useful in checking new functions."
@@ -911,6 +912,17 @@
        )))
   )
 
+(defn show-colors 
+  "Show a visual representation of the color map. Use the combobox to select a named-color.
+   Use the sliders to try different hues (the hexcode will be below the color patch.
+   If the combination of slider settings does not represent a specific color name, the combobox
+   will indicate 'UNKNOWN'.
+"
+  []
+  (. com.rff.utilities.Xcolortable main nil)
+)
+
+
 (defn -main 
   "Simply prints som examples of various functions."
   []
@@ -922,5 +934,8 @@
   (println "\n(get-hex-color \"yuckky yellow\")") ()
   (println "==> nil")
   (println "")
+  (println "To see a visual representation, try:   (show-colors)")
+  (println "   Use the combobox to select a color or use the sliders to explore.")
+  (println "   If a slider combination does not have a named-color, it will say 'Unknown'")
 
 )
