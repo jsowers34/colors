@@ -212,7 +212,7 @@
      {:name "gray51" :red 130 :green 130 :blue 130}
      {:name "gray52" :red 133 :green 133 :blue 133}
      {:name "gray53" :red 135 :green 135 :blue 135}
-     {:name "gray54" :red 138 :green 138 :blue 138}
+     {:name "gray54" :red 138 :green 138 :blue 138} 
      {:name "gray55" :red 140 :green 140 :blue 140}
      {:name "gray56" :red 143 :green 143 :blue 143}
      {:name "gray57" :red 145 :green 145 :blue 145}
@@ -663,7 +663,6 @@
      {:name "wheat3" :red 205 :green 186 :blue 150}
      {:name "wheat4" :red 139 :green 126 :blue 102}
      {:name "white" :red 255 :green 255 :blue 255}
-     {:name "white" :red 255 :green 255 :blue 255}
      {:name "whitesmoke" :red 245 :green 245 :blue 245}
      {:name "yellow" :red 255 :green 255 :blue 0}
      {:name "yellow1" :red 255 :green 255 :blue 0}
@@ -774,21 +773,6 @@
   (map #(get % :name) unix-color-map)
 )
 
-
-(defn -main 
-  "Simply prints som examples of various functions."
-  []
-  (println "Some sample uses:\n")
-  (println "(get-hex-color \"SaddleBrown\")")
-  (println "==> " (get-hex-color "SaddleBrown"))
-  (println "\n(get-rgb-color \"light slate blue\")" )
-  (println "==> " (get-rgb-color "light slate blue"))
-  (println "\n(get-hex-color \"yuckky yellow\")") ()
-  (println "==> nil")
-  (println "")
-
-)
-
 (defn cmap
   "Provides a color mapping of the input color name
    Example:     (cmap \"coral\")
@@ -801,14 +785,16 @@
 (defn remap-colors
   "Create a new map (default base unix-color-map) where each entry is {:name :color}
   For example, (remap-colors test-color-map)
-               ;;==> ({:name \"red\", :color \"ff0000\"}
+               ;;==> [{:name \"blue\", :color \"0000ff\"
                       {:name \"green\", :color \"00ff00\"}
-                      {:name \"blue\", :color \"0000ff\"}
+                      {:name \"red\", :color \"ff0000\"}]
+
+   Note: Result is sorted by ascending color value/ 
 "
   ([]
-   (vec (for [ix (range 0 (count unix-color-map))] (cmap (get (get unix-color-map ix) :name)))))
+   (vec (sort-by :color (for [ix (range 0 (count unix-color-map))] (cmap (get (get unix-color-map ix) :name))))))
   ([mp]
-   (vec (for [ix (range 0 (count mp))] (cmap (get (get mp ix) :name)))))
+   (vec (sort-by :color (for [ix (range 0 (count mp))] (cmap (get (get mp ix) :name)))) ))
 )
 
 (defn find-by-color 
@@ -816,12 +802,15 @@
    one color.
   Example:    (find-by-color \"454545\")
               ;;==>  ({:name \"gray27\", :color \"454545\"} {:name \"grey27\" :color \"454545\"})
+
+              (find-by-color \"00ff00\" test-color-map)
+              ;;==>   (:name \"green\", :color \"00ff00\"})
 "
  ([hexcode]
   (filter #(= (:color %) hexcode) (remap-colors))
   ) 
   ([hexcode rmp]
-  (filter #(= (:color %) hexcode) rmp)
+  (filter #(= (:color %) hexcode) (remap-colors rmp))
    )
 )
 
@@ -862,11 +851,16 @@
 
 (defn- generate-adjustments 
   "Generates a map (of vectors) for + and - adjustments to RGB values."
-[r g b]
-  (let [s #{} lst ()] (into s (for [x (range (- r) (inc r)) y (range (- g) (inc g)) z (range (- b) (inc b)) ]
-                         [x y z]
-                         ))
-))
+  ([r g b]
+   (let [s #{} lst ()] (into s (for [x (range (- r) (inc r)) y (range (- g) (inc g)) z (range (- b) (inc b)) ]
+                                 [x y z]
+                                 ))))
+  ([lstrgb]
+   (let [r (first lstrgb) g (second lstrgb) b (last lstrgb) s #{} lst ()]
+     (into s (for [x (range (- r) (inc r)) y (range (- g) (inc g)) z (range (- b) (inc b)) ]
+               [x y z]
+               ))))
+  )
 
 (defn- get-closest-colors 
 "Walks thru the adjustments data map and adds the rgb value to each triplet."
@@ -880,9 +874,12 @@
    Example:     (find-closest-color-list '(166 42 40) (remap-colors))
                 ;;==>   (\"brown\")
 "
-  [rgb mp]
-  (flatten (filter not-empty 
-                   (map #(names-by-color % mp) (get-closest-colors rgb  (generate-adjustments 2 2 2)))))
+  ([rgb mp]
+   (flatten (filter not-empty 
+                    (map #(names-by-color % mp) (get-closest-colors rgb  (generate-adjustments 2 2 2))))))
+  ([rgb mp depth]
+   (flatten (filter not-empty 
+                    (map #(names-by-color % mp) (get-closest-colors rgb  (generate-adjustments (repeat 3 depth)))))))
   )
 
 (defn find-closest-color
@@ -890,10 +887,40 @@
    Example:    (find-closest-color \"808080\")
                ;;==> (\"gray\" \"grey\" \"gray51\" \"grey51\" \"gray50\" \"grey50\")
    If there is no color closest to value within a depth of 2, then '() is returned.
+   If you get a () then you can try for a deeper search, for example,
+   (find-closest-color \"808580\") will return (), so then try 
+   (find-closest-color \"808580\" 3) which responds with (\"gray51\" \"grey51\").
+
+   Keep in mind, the larger the depth, the more time is consumed.
+   A depth of 2, generates a set of 125 elements and takes 0.43 msecs.
+   A depth of 3. generates a set of 343 elements and takes 0.74 msecs.
+   A depth of 10. generates a set of 9261 elements and takes 12.65 msecs.
 "
-  [hexcode]
-  (let [rmp (remap-colors) rgbval (hexcolor->rgb hexcode)]
-    (if (not-empty (names-by-color hexcode rmp))
-      (names-by-color hexcode rmp)
-      (find-closest-color-list rgbval rmp)      
-      )))
+  ([hexcode]
+   (let [rmp (remap-colors) rgbval (hexcolor->rgb hexcode)]
+     (if (not-empty (names-by-color hexcode rmp))
+       (names-by-color hexcode rmp)
+       (find-closest-color-list rgbval rmp)      
+       ))
+   )
+  ([hexcode depth]
+   (let [rmp (remap-colors) rgbval (hexcolor->rgb hexcode)]
+     (if (not-empty (names-by-color hexcode rmp))
+       (names-by-color hexcode rmp)
+       (find-closest-color-list rgbval rmp depth)      
+       )))
+  )
+
+(defn -main 
+  "Simply prints som examples of various functions."
+  []
+  (println "Some sample uses:\n")
+  (println "(get-hex-color \"SaddleBrown\")")
+  (println "==> " (get-hex-color "SaddleBrown"))
+  (println "\n(get-rgb-color \"light slate blue\")" )
+  (println "==> " (get-rgb-color "light slate blue"))
+  (println "\n(get-hex-color \"yuckky yellow\")") ()
+  (println "==> nil")
+  (println "")
+
+)
