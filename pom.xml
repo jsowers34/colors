@@ -29,7 +29,27 @@
     </testResources>
     <directory>target</directory>
     <outputDirectory>target/classes</outputDirectory>
-    <plugins/>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src/java</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
   <repositories>
     <repository>
@@ -61,6 +81,11 @@
       <groupId>org.clojure</groupId>
       <artifactId>clojure</artifactId>
       <version>1.10.1</version>
+    </dependency>
+    <dependency>
+      <groupId>seesaw</groupId>
+      <artifactId>seesaw</artifactId>
+      <version>1.5.0</version>
     </dependency>
   </dependencies>
 </project>

@@ -16,6 +16,9 @@ Note: Color names are case-insensitive.
 
 (find-closest-color "80817f")
 
+(show-colors)
+
+
 
 ## License
 
