@@ -4,7 +4,7 @@ Colors:  A utility for extracting color values from the classic Unix color map.
 
 ## Installation
 
-Download from http://www.gethub.com/jsowers/colors
+Download from http://www.gethub.com/jsowers34/colors
 
 ## Examples
 
