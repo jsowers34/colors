@@ -1,6 +1,6 @@
 # colors
 
-Colors:  A utility for extracting color values from the classic Unix color map.
+Colors:  A clojure utility for extracting color values from the classic Unix color map.
 
 ## Installation
 
